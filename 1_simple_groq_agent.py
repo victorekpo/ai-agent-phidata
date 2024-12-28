@@ -13,4 +13,4 @@ agent = Agent(
     instructions=["Use tables to display data."]
 )
 
-agent.print_response("Summarize and compare analyst recommendations and fundamentals for TSLA and NVDA listing last dates of price information that you have account of, let me know any thing even if its just the day, month, year that you have")
+agent.print_response("Summarize and compare analyst recommendations and fundamentals for TSLA and NVDA, list the current prices of the symbols also ")

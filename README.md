@@ -138,3 +138,71 @@ https://docs.phidata.com/tools/slack
 Shell - ShellTools enable an Agent to interact with the shell to run commands.
 https://docs.phidata.com/tools/shell
 
+
+### Alternatives
+1. LangChain:
+   - LangChain is a framework for developing applications powered by language models. It allows you to chain together different components, such as models, tools, and data sources, to create complex workflows.
+2. Haystack:  
+   - Haystack is an open-source framework for building search systems, question answering systems, and other NLP applications. It allows you to integrate various models and tools to create a pipeline of AI agents.
+3. Ray:  
+  - Ray is a framework for building and running distributed applications. It provides libraries for machine learning, reinforcement learning, and hyperparameter tuning, allowing you to orchestrate a team of AI agents.
+4. DAGWorks:  
+  - DAGWorks is a framework for building and managing data pipelines. It allows you to create complex workflows with tasks that can be chained together, similar to Phidata.
+
+These frameworks provide capabilities for orchestrating a team of AI agents and can be customized with your own tools and models.
+
+
+### Others
+- Ray: A popular AI framework that supports multi-agent systems and learning with each interaction is Ray with its RLlib library. Ray is a distributed computing framework that allows you to build and manage AI applications, and RLlib is a scalable reinforcement learning library built on top of Ray.  RLlib supports multi-agent reinforcement learning, where multiple agents can interact with each other and learn from their experiences. It provides various algorithms and tools to facilitate the training and evaluation of these agents.  Here is a brief example of how you can set up a multi-agent environment using RLlib:
+```
+import ray
+from ray import tune
+from ray.rllib.agents.ppo import PPOTrainer
+from ray.rllib.env.multi_agent_env import MultiAgentEnv
+import gym
+from gym.spaces import Discrete, Box
+import numpy as np
+
+# Define a simple multi-agent environment
+class SimpleMultiAgentEnv(MultiAgentEnv):
+    def __init__(self, config):
+        self.num_agents = 2
+        self.action_space = Discrete(2)
+        self.observation_space = Box(low=0, high=1, shape=(1,), dtype=np.float32)
+        self.state = np.zeros(self.num_agents)
+
+    def reset(self):
+        self.state = np.zeros(self.num_agents)
+        return {i: self.state[i] for i in range(self.num_agents)}
+
+    def step(self, action_dict):
+        rewards = {i: 1 if action == 1 else 0 for i, action in action_dict.items()}
+        self.state = np.random.rand(self.num_agents)
+        obs = {i: self.state[i] for i in range(self.num_agents)}
+        dones = {i: False for i in range(self.num_agents)}
+        dones["__all__"] = False
+        return obs, rewards, dones, {}
+
+# Initialize Ray
+ray.init()
+
+# Define the training configuration
+config = {
+    "env": SimpleMultiAgentEnv,
+    "env_config": {},
+    "multiagent": {
+        "policies": {
+            "policy_1": (None, SimpleMultiAgentEnv().observation_space, SimpleMultiAgentEnv().action_space, {}),
+            "policy_2": (None, SimpleMultiAgentEnv().observation_space, SimpleMultiAgentEnv().action_space, {}),
+        },
+        "policy_mapping_fn": lambda agent_id: "policy_1" if agent_id == 0 else "policy_2",
+    },
+    "framework": "tf",  # or "torch"
+}
+
+# Train the multi-agent system
+tune.run(PPOTrainer, config=config, stop={"episodes_total": 1000})
+
+# Shutdown Ray
+ray.shutdown()
+```

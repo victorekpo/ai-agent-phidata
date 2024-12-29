@@ -3,29 +3,30 @@ import os
 import random
 import string
 
-class NameLearningEnvironment:
-    def __init__(self, name):
-        self.name = name
+class QuestionAnswerLearningEnvironment:
+    def __init__(self, question, answer):
+        self.question = question
+        self.answer = answer
         self.state = 0
         self.alphabet = string.ascii_lowercase
 
     def reset(self, training=True):
         if training:
             self.state = 0  # Always start at the first letter during training
-            print(f"Starting at letter: {self.name[self.state]}")
+            print(f"Starting at letter: {self.answer[self.state]}")
         else:
             self.state = 0  # During testing, we begin from the first letter
-            print(f"Starting at letter: {self.name[self.state]}")
+            print(f"Starting at letter: {self.answer[self.state]}")
         return self.state
 
     def step(self, action):
         if action == 0:
-            self.state = min(self.state + 1, len(self.name) - 1)
+            self.state = min(self.state + 1, len(self.answer) - 1)
         elif action == 1:
             self.state = max(self.state - 1, 0)
 
         # If the agent is at the last character, mark as done and give a reward
-        if self.state == len(self.name) - 1:
+        if self.state == len(self.answer) - 1:
             reward = 1
             done = True
         else:
@@ -71,12 +72,12 @@ def train_agent(env, q_table, alpha, gamma, epsilon, num_episodes, file_path):
 def test_agent(env, q_table):
     state = env.reset(training=False)
     done = False
-    current_guess = [env.name[state]]  # Start with the first letter in the name
+    current_guess = [env.answer[state]]  # Start with the first letter in the answer
 
     while not done:
         action = np.argmax(q_table[state])  # Choose best action based on learned policy
         next_state, reward, done = env.step(action)
-        current_guess.append(env.name[next_state])  # Append the guessed letter
+        current_guess.append(env.answer[next_state])  # Append the guessed letter
         print(f"Current Guess: {''.join(current_guess)}, State: {state}, Reward: {reward}")
 
     print(f"Final Guess: {''.join(current_guess)}")
@@ -86,11 +87,12 @@ def main():
     gamma = 0.99
     epsilon = 0.1
     num_episodes = 1000
-    q_table_file = 'q_table_name4b.npy'
-    NAME_TO_LEARN = "blues-and-rhythm"  # Change this to any name or sequence you want to learn
+    q_table_file = 'q_table_qa.npy'
+    QUESTION = "What is the capital of Texas?"
+    ANSWER = "Austin"  # The answer to the question
 
-    env = NameLearningEnvironment(NAME_TO_LEARN)
-    q_table = initialize_q_table(q_table_file, len(env.name))
+    env = QuestionAnswerLearningEnvironment(QUESTION, ANSWER)
+    q_table = initialize_q_table(q_table_file, len(env.answer))
 
     if not os.path.exists(q_table_file):
         train_agent(env, q_table, alpha, gamma, epsilon, num_episodes, q_table_file)

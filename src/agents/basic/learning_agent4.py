@@ -1,14 +1,24 @@
 import numpy as np
 import os
+import random
+import string
 
 class NameLearningEnvironment:
     def __init__(self, name):
         self.name = name
         self.state = 0
+        self.alphabet = string.ascii_lowercase
 
-    def reset(self):
-        self.state = 0
-        print(f"Starting at letter: {self.name[self.state]}")
+    def reset(self, training=True):
+        if training:
+            random_letter = random.choice(self.alphabet)
+            self.state = self.name.find(random_letter)
+            if self.state == -1:
+                self.state = 0
+            print(f"Starting at letter: {random_letter}")
+        else:
+            self.state = 0
+            print(f"Starting at letter: {self.name[self.state]}")
         return self.state
 
     def step(self, action):
@@ -43,7 +53,7 @@ def choose_action(state, q_table, epsilon):
 
 def train_agent(env, q_table, alpha, gamma, epsilon, num_episodes, file_path):
     for episode in range(num_episodes):
-        state = env.reset()
+        state = env.reset(training=True)
         done = False
         while not done:
             action = choose_action(state, q_table, epsilon)
@@ -60,14 +70,19 @@ def train_agent(env, q_table, alpha, gamma, epsilon, num_episodes, file_path):
     print("Q-table saved to file.")
 
 def test_agent(env, q_table):
-    state = env.reset()
+    # Identify the first letter using the Q-table
+    first_letter_index = np.argmax(q_table[:, 0] + q_table[:, 1])
+    print(f"Identified first letter: {env.name[first_letter_index]}")
+
+    state = first_letter_index
     done = False
-    current_guess = [env.name[state]]  # Start with the initial letter
+    current_guess = [env.name[state]] if state != -1 else []
 
     while not done:
         action = np.argmax(q_table[state])
         state, reward, done = env.step(action)
-        current_guess.append(env.name[state])
+        if state != -1:
+            current_guess.append(env.name[state])
         print(f"Current Guess: {''.join(current_guess)}, State: {state}, Action: {chr(action + ord('A'))}, Reward: {reward}")
 
     print(f"Final Guess: {''.join(current_guess)}")
@@ -77,7 +92,7 @@ def main():
     gamma = 0.99
     epsilon = 0.1
     num_episodes = 1000
-    q_table_file = 'q_table_name3.npy'
+    q_table_file = 'q_table_name4.npy'
     NAME_TO_LEARN = "vic"  # Change this to any name or sequence you want to learn
 
     env = NameLearningEnvironment(NAME_TO_LEARN)

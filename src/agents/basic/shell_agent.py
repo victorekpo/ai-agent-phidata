@@ -16,6 +16,7 @@ agent = Agent(
 )
 
 # Run the command using the agent
-response = agent.run("Show me the contents of the current directory by listing the files, only run one command")
-print("Response", response)
-print(format_output_to_table(response))
+def run():
+    response = agent.run("Show me the contents of the current directory by listing the files, only run one command")
+    print("Response", response)
+    print(format_output_to_table(response))

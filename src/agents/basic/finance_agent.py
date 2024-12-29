@@ -13,4 +13,6 @@ agent = Agent(
     instructions=["Use tables to display data."]
 )
 
-agent.print_response("Summarize and compare analyst recommendations and fundamentals for TSLA and NVDA, list the current prices of the symbols also ")
+def run():
+    agent.print_response(
+        "Summarize and compare analyst recommendations and fundamentals for TSLA and NVDA, list the current prices of the symbols also ")

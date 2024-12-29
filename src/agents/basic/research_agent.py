@@ -20,4 +20,6 @@ agent = Agent(
     add_datetime_to_instructions=True,
     # debug_mode=True,
 )
-agent.print_response("Simulation theory", stream=True)
+
+def run():
+    agent.print_response("Simulation theory", stream=True)

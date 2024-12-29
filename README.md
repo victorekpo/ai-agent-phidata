@@ -16,7 +16,125 @@ An AI agent is a system that perceives its environment and takes actions to achi
 14. Robotic Agents: These agents are embodied in physical robots that interact with the environment through sensors and actuators. They can move, manipulate objects, and perform tasks in the physical world. An example is a humanoid robot that walks, talks, and interacts with humans in a social setting.
 
 ## Phidata Framework
+What is Phidata?
+Phidata is a framework for building multi-modal agents and workflows.
+
+Build agents with memory, knowledge, tools and reasoning.
+Build teams of agents that can work together to solve problems.
+Interact with your agents and workflows using a beautiful Agent UI.
+https://docs.phidata.com/agents/introduction
 
 ## To install
-`pip3 install phidata groq`
+`pip3 install phidata groq openai duckduckgo-search newspaper4k lxml_html_clean`
+
+Simple & Elegant
+Phidata Agents are simple and elegant, resulting in minimal, beautiful code.
+
+For example, you can create a web search agent in 10 lines of code.
+```
+# web_search.py
+
+from phi.agent import Agent
+from phi.model.openai import OpenAIChat
+from phi.tools.duckduckgo import DuckDuckGo
+
+web_agent = Agent(
+    name="Web Agent",
+    model=OpenAIChat(id="gpt-4o"),
+    tools=[DuckDuckGo()],
+    instructions=["Always include sources"],
+    show_tool_calls=True,
+    markdown=True,
+)
+web_agent.print_response("Tell me about OpenAI Sora?", stream=True)
+```
+python3 -m venv ~/.venvs/aienv
+source ~/.venvs/aienv/bin/activate
+pip install -U phidata openai duckduckgo-search
+export OPENAI_API_KEY=sk-***
+python web_search.py
+
+### Multi-Modal by default
+Phidata agents support text, images, audio and video.
+For example, you can create an image agent that can understand images and make tool calls as needed
+```
+from phi.agent import Agent
+from phi.model.openai import OpenAIChat
+from phi.tools.duckduckgo import DuckDuckGo
+
+agent = Agent(
+    model=OpenAIChat(id="gpt-4o"),
+    tools=[DuckDuckGo()],
+    markdown=True,
+)
+
+agent.print_response(
+    "Tell me about this image and give me the latest news about it.",
+    images=["https://upload.wikimedia.org/wikipedia/commons/b/bf/Krakow_-_Kosciol_Mariacki.jpg"],
+    stream=True,
+)
+```
+
+### Multi-Agent orchestration
+Phidata agents can work together as a team to achieve complex tasks.
+```
+from phi.agent import Agent
+from phi.model.openai import OpenAIChat
+from phi.tools.duckduckgo import DuckDuckGo
+from phi.tools.yfinance import YFinanceTools
+
+web_agent = Agent(
+    name="Web Agent",
+    role="Search the web for information",
+    model=OpenAIChat(id="gpt-4o"),
+    tools=[DuckDuckGo()],
+    instructions=["Always include sources"],
+    show_tool_calls=True,
+    markdown=True,
+)
+
+finance_agent = Agent(
+    name="Finance Agent",
+    role="Get financial data",
+    model=OpenAIChat(id="gpt-4o"),
+    tools=[YFinanceTools(stock_price=True, analyst_recommendations=True, company_info=True)],
+    instructions=["Use tables to display data"],
+    show_tool_calls=True,
+    markdown=True,
+)
+
+agent_team = Agent(
+    team=[web_agent, finance_agent],
+    instructions=["Always include sources", "Use tables to display data"],
+    show_tool_calls=True,
+    markdown=True,
+)
+
+agent_team.print_response("Summarize analyst recommendations and share the latest news for NVDA", stream=True)
+```
+
+Phidata provides a beautiful Agent UI for interacting with your agents.
+
+https://docs.phidata.com/tools/toolkits
+
+Send email with gmail
+https://docs.phidata.com/tools/email
+
+Read files from the disk
+https://docs.phidata.com/tools/file
+
+Pandas
+https://docs.phidata.com/tools/pandas
+
+Python - PythonTools enable an Agent to write and run python code.
+https://docs.phidata.com/tools/python
+
+Postgres - PostgresTools enable an Agent to interact with a PostgreSQL database.
+https://docs.phidata.com/tools/postgres
+
+Slack - 
+https://docs.phidata.com/tools/slack
+
+Shell - ShellTools enable an Agent to interact with the shell to run commands.
+https://docs.phidata.com/tools/shell
 

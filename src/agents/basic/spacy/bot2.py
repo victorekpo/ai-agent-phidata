@@ -1,17 +1,18 @@
-import spacy
-from sentence_transformers import SentenceTransformer, util
 import json
-import requests
-from bs4 import BeautifulSoup
 import time
 from datetime import datetime, timedelta
-import os
+
+import requests
+import spacy
+from bs4 import BeautifulSoup
+from sentence_transformers import SentenceTransformer, util
+
 
 class ConversationalAgent:
     def __init__(self, name):
         self.name = name
         self.dob = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.brain = {}
+        self.brain = []
         self.brain_extended = []
         self.residence = None
         self.bank_balance = {category: 0 for category in ["income", "expenses", "savings", "misc"]}
@@ -29,10 +30,10 @@ class ConversationalAgent:
         for saved_info in self.brain_extended:
             print("Saved information in brain extended", saved_info["url"])
             for detail in saved_info["details"]:
-              #  print("Detailed information", detail)
+                #  print("Detailed information", detail)
                 saved_question_embedding = self.sentence_model.encode(detail, convert_to_tensor=True)
                 similarity = util.pytorch_cos_sim(question_embedding, saved_question_embedding).item()
-             #   print("Similarity", similarity, "Highest Similarity", highest_similarity)
+                #   print("Similarity", similarity, "Highest Similarity", highest_similarity)
                 if similarity > highest_similarity:
                     highest_similarity = similarity
                     best_match = detail
@@ -82,7 +83,7 @@ class ConversationalAgent:
         soup = BeautifulSoup(response.content, 'html.parser')
         text = soup.get_text()
         self.add_to_brain_extended(url, text)
-        self.process_information("scraped", url, text)
+        # self.process_information("scraped", url, text)
         print("Webpage content added to knowledge base and processed to brain.")
 
     def save_brain_extended(self, filename="brain_extended.json"):
@@ -115,47 +116,27 @@ class ConversationalAgent:
         formatted_value = value  # Optional formatting logic can be added here.
 
         if value and limit != 0:
-            if _type not in self.brain or self.brain.get(_type, {}).get(key) in ["{}", "[]"]:
-                self.brain[_type] = {}
-
-            if key not in self.brain[_type] or self.brain[_type][key] in ["{}", "[]"]:
-                self.brain[_type][key] = []
-
             item_exists = any(
                 isinstance(entry, dict) and (
-                            entry["value"] == formatted_value or formatted_value in entry["value"].split("\r\n"))
-                for entry in self.brain[_type][key]
+                        entry["type"] == _type and entry["key"] == key and entry["value"] == formatted_value
+                )
+                for entry in self.brain
             )
 
-            if not item_exists and len(formatted_value) == 1 and len(self.brain[_type][key]) < 1 and cache:
-                self.brain[_type][key] = [{"time": datetime.now().isoformat(), "value": value}]
+            if item_exists:
+                print("Item already exists in brain.", formatted_value)
+                return
 
-            if (not item_exists or not cache) and (
-                    len(formatted_value) > 1 or isinstance(self._try_to_parse(self.brain[_type][key]), dict)
-            ):
-                to_add = (
-                        "\r\n".join(
-                            {
-                                line
-                                for line in formatted_value.split("\r\n")
-                                if "@file:" in line or not any(
-                                line in entry["value"] for entry in self.brain[_type][key] if isinstance(entry, dict)
-                            )
-                            }
-                        )
-                        .replace("\r\n\r\n", "\r\n")
-                        or None
-                )
-                if to_add:
-                    self.brain[_type][key] = list(
-                        {
-                            tuple(entry.items()) for entry in self.brain[_type][key] if isinstance(entry, dict)
-                        } | {("time", datetime.now().isoformat()), ("value", to_add)}
-                    )
+            if not item_exists:
+                self.brain.append({
+                    "type": _type,
+                    "key": key,
+                    "value": formatted_value,
+                    "timestamp": datetime.now().isoformat()
+                })
 
-            if limit > 0 and isinstance(self._try_to_parse(self.brain[_type][key]), list):
-                while len(self.brain[_type][key]) > limit:
-                    self.brain[_type][key].pop(0)
+            if limit > 0:
+                self.brain = self.brain[-limit:]
 
         self.save_brain()
 
@@ -205,9 +186,10 @@ def main():
     start_time = time.time()
 
     load_start = time.time()
-    agent = ConversationalAgent("Victor")
+    agent = ConversationalAgent("vicBot")
     agent.load_brain_extended()
     agent.load_brain()
+    agent.live("Milwaukee, Wisconsin")
     load_end = time.time()
     print(f"Loading agent took {load_end - load_start:.2f} seconds")
 
@@ -237,7 +219,12 @@ def main():
     print(f"Getting monthly budget took {monthly_budget_end - monthly_budget_start:.2f} seconds")
 
     learn_start = time.time()
-    agent.learn("type", "key", "value")
+    agent.learn("coding", "Java-Completeable-Futures",
+                "Completeable-Futures are awesome, they allow you to run asynchronous code in java")
+    agent.learn("coding", "Java-Completeable-Futures",
+                "Completeable-Futures are awesome, they allow you to run asynchronous code in java")
+    agent.learn("coding", "Java-Completeable-Futures",
+                "You can create Completeable Futures by...CompletableFuture.supplyAsync(() -> {return 42;})")
     learn_end = time.time()
     print(f"Learning took {learn_end - learn_start:.2f} seconds")
 
